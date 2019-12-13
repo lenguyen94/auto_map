@@ -43,7 +43,7 @@ from geometry_msgs.msg import Twist
 def talker():
 	twist = Twist()
 	
-    pub = rospy.Publisher('cmd_vel', Twist, queue_size = 1)
+    pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
     rospy.init_node('teleop', anonymous=True)
     rate = rospy.Rate(10) # 10hz
