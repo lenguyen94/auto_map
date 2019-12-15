@@ -37,35 +37,35 @@
 ## to the 'chatter' topic
 
 import rospy
-from std_msgs.msg import String
+#from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 
 def talker():
-	twist = Twist()
-	
+    twist = Twist()
+
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
     rospy.init_node('teleop', anonymous=True)
     rate = rospy.Rate(10) # 10hz
     while not rospy.is_shutdown():
-    	cmd_char = input("Keys w/x a/d s: ")
-    	if cmd_char == "s"    		
-			twist.linear.x = 0.0
-			twist.angular.z = 0.0
-    	elif cmd_char == "w"    		
-			twist.linear.x = -0.1
-			twist.angular.z = 0.0
-    	elif cmd_char == "x"    		
-			twist.linear.x = 0.1
-			twist.angular.z = 0.0
-    	elif cmd_char == "a"    		
-			twist.linear.x = 0.0
-			twist.angular.z = 1.0
-    	elif cmd_char == "d"    		
-			twist.linear.x = 0.0
-			twist.angular.z = -1.0
+    	cmd_char = str(raw_input("Keys w/x a/d s: "))
+    	if cmd_char == 's':
+	    twist.linear.x = 0.0
+	    twist.angular.z = 0.0
+    	elif cmd_char == 'w':
+	    twist.linear.x = 0.1
+	    twist.angular.z = 0.0
+    	elif cmd_char == 'x':
+	    twist.linear.x = -0.1
+	    twist.angular.z = 0.0
+    	elif cmd_char == 'a':
+	    twist.linear.x = 0.0
+	    twist.angular.z = 1.0
+    	elif cmd_char == 'd':
+	    twist.linear.x = 0.0
+	    twist.angular.z = -1.0
 
-		pub.publish(twist)
+	pub.publish(twist)
 
         rospy.loginfo(cmd_char)
         rate.sleep()
