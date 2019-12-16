@@ -46,7 +46,7 @@ def talker():
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
     rospy.init_node('mover', anonymous=True)
-    rate = rospy.Rate(10) # 10hz
+    # rate = rospy.Rate(10) # 10hz
     while not rospy.is_shutdown():
     	cmd_char = str(raw_input("Keys w/x a/d s: "))
     	if cmd_char == 's':
@@ -68,7 +68,7 @@ def talker():
 	pub.publish(twist)
 
         rospy.loginfo(cmd_char)
-        rate.sleep()
+        # rate.sleep()
 
 if __name__ == '__main__':
     try:
