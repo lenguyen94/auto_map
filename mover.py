@@ -45,7 +45,7 @@ def talker():
 
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
-    rospy.init_node('teleop', anonymous=True)
+    rospy.init_node('mover', anonymous=True)
     rate = rospy.Rate(10) # 10hz
     while not rospy.is_shutdown():
     	cmd_char = str(raw_input("Keys w/x a/d s: "))
