@@ -37,12 +37,17 @@
 ## to the 'chatter' topic
 
 import rospy
+import numpy as np
 from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 
 def callback(msg):
-	
-    rospy.loginfo(rospy.get_caller_id() + 'I heard %s', msg.ranges)
+	laser_range = np.array([msg.ranges])
+	# replace 0's with nan
+	lr2 = (laser_range==0).choose(laser_range,np.nan)
+	# find index with minimum value
+	lr2i = np.nanargmin(lr2)
+    rospy.loginfo('Shortest distance is %i degrees', l2ri)
 
 def listener():
 
@@ -53,10 +58,12 @@ def listener():
     # run simultaneously.
     rospy.init_node('scanner', anonymous=True)
 
+    rate = rospy.Rate(1) # 10hz
     rospy.Subscriber('scan', LaserScan, callback)
+    rate.sleep()
 
     # spin() simply keeps python from exiting until this node is stopped
-    rospy.spin()
+    # rospy.spin()
 
 if __name__ == '__main__':
     listener()
