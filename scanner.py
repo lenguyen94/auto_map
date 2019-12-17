@@ -44,7 +44,9 @@ from sensor_msgs.msg import LaserScan
 def callback(msg):
 	laser_range = np.array([msg.ranges])
 	# replace 0's with nan
-	lr2 = (laser_range==0).choose(laser_range,np.nan)
+	lr2 = laser_range
+	lr2[lr2==0] = np.nan
+	# lr2 = (laser_range==0).choose(laser_range,np.nan)
 	# find index with minimum value
 	lr2i = np.nanargmin(lr2)
     	rospy.loginfo('Shortest distance is %i degrees', lr2i)
