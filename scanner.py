@@ -47,7 +47,7 @@ def callback(msg):
 	lr2 = (laser_range==0).choose(laser_range,np.nan)
 	# find index with minimum value
 	lr2i = np.nanargmin(lr2)
-    rospy.loginfo('Shortest distance is %i degrees', l2ri)
+    	rospy.loginfo('Shortest distance is %i degrees', lr2i)
 
 def listener():
 
@@ -63,7 +63,7 @@ def listener():
     rate.sleep()
 
     # spin() simply keeps python from exiting until this node is stopped
-    # rospy.spin()
+    rospy.spin()
 
 if __name__ == '__main__':
     listener()
