@@ -23,8 +23,8 @@ def rotatebot(rot_angle):
     twist = Twist()
     # set up Publisher to cmd_vel topic
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
-    # set the update rate to 5 Hz
-    rate = rospy.Rate(5)
+    # set the update rate to 1 Hz
+    rate = rospy.Rate(1)
 
     # get current yaw angle
     current_yaw = yaw
@@ -32,6 +32,7 @@ def rotatebot(rot_angle):
     rospy.loginfo(['Current: ' + str(current_yaw)])
     # calculate desired yaw
     desired_yaw = current_yaw + math.radians(rot_angle)
+    rospy.loginfo(['Desired: ' + str(desired_yaw)])
     # set linear speed to zero so the TurtleBot rotates on the spot
     twist.linear.x = 0.0
     # check which direction we should rotate
@@ -47,6 +48,7 @@ def rotatebot(rot_angle):
     twist.angular.z = 0.0
 
     while(yaw < desired_yaw):
+		rospy.loginfo(['Yaw: ' + str(yaw)])
         rate.sleep()
 
     # stop rotation
