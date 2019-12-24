@@ -9,6 +9,7 @@ import cmath
 import numpy as np
 
 roll = pitch = yaw = 0.0
+rotate_speed = 0.1
 
 def isnumber(value):
     try:
@@ -34,47 +35,49 @@ def rotatebot(rot_angle):
     # set the update rate to 1 Hz
     rate = rospy.Rate(1)
 
-# Use complex numbers with modulus 1 instead of angles. That would be z = cos(alpha) + i * sin(alpha).
-
-# if (imag(desired / current) > 0.0)
-#   current *= Complex(cos(0.1), sin(0.1));
-# else
-#   current *= Complex(cos(0.1), -sin(0.1));
-
-# It's not just this piece of code: Pretty much anything you want to do with angles is easier with complex numbers.
-
     # get current yaw angle
     current_yaw = yaw
     # log the info
     rospy.loginfo(['Current: ' + str(math.degrees(current_yaw))])
+    # we are going to use complex numbers to avoid problems when the angles go from
+    # 360 to 0, or from -180 to 180
     c_yaw = complex(math.cos(current_yaw),math.sin(current_yaw))
     # calculate desired yaw
     target_yaw = current_yaw + math.radians(rot_angle)
+    # convert to complex notation
     c_target_yaw = complex(math.cos(target_yaw),math.sin(target_yaw))
     rospy.loginfo(['Desired: ' + str(math.degrees(cmath.phase(c_target_yaw)))])
     # divide the two complex numbers to get the change in direction
     c_change = c_target_yaw / c_yaw
+    # get the sign of the imaginary component to figure out which way we have to turn
     c_change_dir = np.sign(c_change.imag)
     # set linear speed to zero so the TurtleBot rotates on the spot
     twist.linear.x = 0.0
-    # check which direction we should rotate
-    twist.angular.z = c_change_dir * 0.1
-    # rotate until yaw angle exceeds yaw+angle
+    # set the direction to rotate
+    twist.angular.z = c_change_dir * rotate_speed
+    # start rotation
     pub.publish(twist)
 
+    # we will use the c_dir_diff variable to see if we can stop rotating
     c_dir_diff = c_change_dir
     rospy.loginfo(['c_change_dir: ' + str(c_change_dir) + ' c_dir_diff: ' + str(c_dir_diff)])
+    # if the rotation direction was 1.0, then we will want to stop when the c_dir_diff
+    # becomes -1.0, and vice versa
     while(c_change_dir * c_dir_diff > 0):
+        # get the current yaw in complex form
         c_yaw = complex(math.cos(yaw),math.sin(yaw))
         rospy.loginfo(['While Yaw: ' + str(math.degrees(yaw))])
+        # get difference in angle between current and target
         c_change = c_target_yaw / c_yaw
+        # get the sign to see if we can stop
         c_dir_diff = np.sign(c_change.imag)
         rospy.loginfo(['c_change_dir: ' + str(c_change_dir) + ' c_dir_diff: ' + str(c_dir_diff)])
         rate.sleep()
 
     rospy.loginfo(['End Yaw: ' + str(math.degrees(yaw))])
+    # set the rotation speed to 0
     twist.angular.z = 0.0
-    # rotate until yaw angle exceeds yaw+angle
+    # stop the rotation
     pub.publish(twist)
 
 
