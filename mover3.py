@@ -24,7 +24,6 @@ def get_rotation (msg):
     orientation_quat =  msg.pose.pose.orientation
     orientation_list = [orientation_quat.x, orientation_quat.y, orientation_quat.z, orientation_quat.w]
     (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
-    yaw = yaw % (2*math.pi)
 
 
 def rotatebot(rot_angle):
@@ -81,7 +80,7 @@ def rotatebot(rot_angle):
     pub.publish(twist)
 
 
-def mover2():
+def mover():
     twist = Twist()
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
     rospy.init_node('mover', anonymous=True)
@@ -112,6 +111,6 @@ def mover2():
 
 if __name__ == '__main__':
     try:
-        mover2()
+        mover()
     except rospy.ROSInterruptException:
         pass
