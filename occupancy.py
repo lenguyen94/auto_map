@@ -14,7 +14,7 @@ def callback(msg):
 	# calculate total number of bins
 	total_bins = msg.info.width * msg.info.height
 	# log the info
-	rospy.loginfo('% unmapped: %f', occ_counts[0][0]/ total_bins * 100)
+	rospy.loginfo('Unmapped: %i Total: %i', occ_counts[0][0], total_bins)
 
 
 def occupancy():
@@ -26,7 +26,7 @@ def occupancy():
 
 	# subscribe to map occupancy data
 	rospy.Subscriber('map', OccupancyGrid, callback)
-    
+
 	# wait until it is time to run again
 	rate.sleep()
 
