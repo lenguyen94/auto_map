@@ -6,6 +6,7 @@ from tf.transformations import euler_from_quaternion
 from geometry_msgs.msg import Twist
 import math
 import cmath
+import numpy as np
 
 roll = pitch = yaw = 0.0
 
@@ -46,14 +47,14 @@ def rotatebot(rot_angle):
     current_yaw = yaw
     # log the info
     rospy.loginfo(['Current: ' + str(math.degrees(current_yaw))])
-    c_yaw = complex(math.cos(yaw),math.sin(yaw))
+    c_yaw = complex(math.cos(current_yaw),math.sin(current_yaw))
     # calculate desired yaw
     target_yaw = current_yaw + math.radians(rot_angle)
     c_target_yaw = complex(math.cos(target_yaw),math.sin(target_yaw))
     rospy.loginfo(['Desired: ' + str(math.degrees(cmath.phase(c_target_yaw)))])
     # divide the two complex numbers to get the change in direction
     c_change = c_target_yaw / c_yaw
-    c_change_dir = c_change.imag / cmath.polar(c_change)
+    c_change_dir = np.sign(c_change.imag)
     # set linear speed to zero so the TurtleBot rotates on the spot
     twist.linear.x = 0.0
     # check which direction we should rotate
@@ -61,19 +62,21 @@ def rotatebot(rot_angle):
     # rotate until yaw angle exceeds yaw+angle
     pub.publish(twist)
 
-    c_dir_diff = c_change_dir    
-    while(c_change_dir * c_dir_diff < 0):
+    c_dir_diff = c_change_dir
+    rospy.loginfo(['c_change_dir: ' + str(c_change_dir) + ' c_dir_diff: ' + str(c_dir_diff)])
+    while(c_change_dir * c_dir_diff > 0):
         c_yaw = complex(math.cos(yaw),math.sin(yaw))
         rospy.loginfo(['While Yaw: ' + str(math.degrees(yaw))])
         c_change = c_target_yaw / c_yaw
-        c_dir_diff = c_change.imag / cmath.polar(c_change)
+        c_dir_diff = np.sign(c_change.imag)
+        rospy.loginfo(['c_change_dir: ' + str(c_change_dir) + ' c_dir_diff: ' + str(c_dir_diff)])
         rate.sleep()
 
     rospy.loginfo(['End Yaw: ' + str(math.degrees(yaw))])
     twist.angular.z = 0.0
     # rotate until yaw angle exceeds yaw+angle
     pub.publish(twist)
-    
+
 
 def mover2():
     twist = Twist()
