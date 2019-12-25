@@ -8,8 +8,9 @@ import math
 import cmath
 import numpy as np
 
-roll = pitch = yaw = 0.0
+yaw = 0.0
 rotate_speed = 0.1
+linear_speed = 0.1
 
 def isnumber(value):
     try:
@@ -19,8 +20,8 @@ def isnumber(value):
         return False
 
 
-def get_rotation (msg):
-    global roll, pitch, yaw
+def get_rotation(msg):
+    global yaw
     orientation_quat =  msg.pose.pose.orientation
     orientation_list = [orientation_quat.x, orientation_quat.y, orientation_quat.z, orientation_quat.w]
     (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
@@ -98,10 +99,10 @@ def mover():
                 twist.linear.x = 0.0
                 twist.angular.z = 0.0
             elif cmd_char == 'w':
-                twist.linear.x = 0.1
+                twist.linear.x = linear_speed
                 twist.angular.z = 0.0
             elif cmd_char == 'x':
-                twist.linear.x = -0.1
+                twist.linear.x = -linear_speed
                 twist.angular.z = 0.0
 
             pub.publish(twist)
