@@ -10,7 +10,7 @@ import math
 import cmath
 import numpy as np
 
-laser_range = []
+laser_range = np.array([])
 occdata = []
 yaw = 0.0
 rotate_speed = 0.1
@@ -20,7 +20,7 @@ occ_bins = [-1, 0, 100, 101]
 
 def get_odom_dir(msg):
     global yaw
-    
+
     orientation_quat =  msg.pose.pose.orientation
     orientation_list = [orientation_quat.x, orientation_quat.y, orientation_quat.z, orientation_quat.w]
     (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
@@ -28,16 +28,24 @@ def get_odom_dir(msg):
 
 def get_laserscan(msg):
     global laser_range
-    
+
     # create numpy array
     laser_range = np.array([msg.ranges])
-    # replace 0's with nan
-    lr2 = laser_range
-    lr2[lr2==0] = np.nan
-    # find index with minimum value
-    lr2i = np.nanargmin(lr2)
-    # log the info
-    rospy.loginfo('Shortest distance is %i degrees', lr2i)
+    # find 0's
+#    lr2 = np.copy(laser_range)
+#    # rospy.loginfo('Shape %i', lr2.shape[0])
+#    lr2i = (lr2==0).nonzero()
+#    # if the list is not empty
+#    if(len(lr2i[0])>0):
+#        # replace 0's with nan
+#        lr2[lr2i] = np.nan
+#
+#    # find index with minimum value
+#    lr2m = np.nanargmin(lr2)
+#    # log the info
+#    if(len(lr2)>0):
+#        # rospy.loginfo('Shortest distance is %f m at %i degrees', lr2[lr2m],lr2m)
+#        rospy.loginfo('Shortest distance is at %i degrees',lr2m)
 
 
 def get_occupancy(msg):
@@ -64,7 +72,7 @@ def rotatebot(rot_angle):
     rate = rospy.Rate(1)
 
     # get current yaw angle
-    current_yaw = yaw
+    current_yaw = np.copy(yaw)
     # log the info
     rospy.loginfo(['Current: ' + str(math.degrees(current_yaw))])
     # we are going to use complex numbers to avoid problems when the angles go from
@@ -88,21 +96,23 @@ def rotatebot(rot_angle):
 
     # we will use the c_dir_diff variable to see if we can stop rotating
     c_dir_diff = c_change_dir
-    rospy.loginfo(['c_change_dir: ' + str(c_change_dir) + ' c_dir_diff: ' + str(c_dir_diff)])
+    # rospy.loginfo(['c_change_dir: ' + str(c_change_dir) + ' c_dir_diff: ' + str(c_dir_diff)])
     # if the rotation direction was 1.0, then we will want to stop when the c_dir_diff
     # becomes -1.0, and vice versa
     while(c_change_dir * c_dir_diff > 0):
+        # get current yaw angle
+        current_yaw = np.copy(yaw)
         # get the current yaw in complex form
-        c_yaw = complex(math.cos(yaw),math.sin(yaw))
-        rospy.loginfo(['While Yaw: ' + str(math.degrees(c_yaw))])
+        c_yaw = complex(math.cos(current_yaw),math.sin(current_yaw))
+        rospy.loginfo('While Yaw: %f Target Yaw: %f', math.degrees(current_yaw), math.degrees(target_yaw))
         # get difference in angle between current and target
         c_change = c_target_yaw / c_yaw
         # get the sign to see if we can stop
         c_dir_diff = np.sign(c_change.imag)
-        rospy.loginfo(['c_change_dir: ' + str(c_change_dir) + ' c_dir_diff: ' + str(c_dir_diff)])
+        # rospy.loginfo(['c_change_dir: ' + str(c_change_dir) + ' c_dir_diff: ' + str(c_dir_diff)])
         rate.sleep()
 
-    rospy.loginfo(['End Yaw: ' + str(math.degrees(c_yaw))])
+    rospy.loginfo(['End Yaw: ' + str(math.degrees(current_yaw))])
     # set the rotation speed to 0
     twist.angular.z = 0.0
     # stop the rotation
@@ -111,34 +121,46 @@ def rotatebot(rot_angle):
 
 def pick_direction():
     global laser_range
-    
+
     # publish to cmd_vel to move TurtleBot
-    pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+    pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
 
     # stop moving
     twist = Twist()
     twist.linear.x = 0.0
     twist.angular.z = 0.0
     pub.publish(twist)
-    
+
     # find direction with the largest distance from the Lidar
     # replace 0's with nan
-    lr2 = laser_range
-    lr2[lr2==0] = np.nan
+    lr2 = np.copy(laser_range)
+    lr2i = (lr2==0).nonzero()
+    # if the list is not empty
+    if(len(lr2i[0])>0):
+        # replace 0's with nan
+        lr2[lr2i] = np.nan
+
     # find index with maximum value
-    lr2i = np.nanargmax(lr2)
-        
+    if(len(lr2)>0):
+        lr2i = np.nanargmax(lr2)
+    else:
+        lr2i = 0
+
+    rospy.loginfo(['Picked direction: ' + str(lr2i)])
+
     # rotate to that direction
-    rotatebot(lr2i)
-    
+    rotatebot(float(lr2i))
+
     # start moving
-    twist = Twist()
-    twist.linear.x = linear_speed
+    rospy.loginfo(['Start moving'])
+    twist.linear.x = 0.01
     twist.angular.z = 0.0
     pub.publish(twist)
 
 
 def mover():
+    global laser_range
+
     rospy.init_node('mover', anonymous=True)
 
     # subscribe to odometry data
@@ -148,7 +170,7 @@ def mover():
     # subscribe to map occupancy data
     rospy.Subscriber('map', OccupancyGrid, get_occupancy)
 
-    rate = rospy.Rate(1) # 1 Hz
+    rate = rospy.Rate(5) # 5 Hz
 
     # find direction with the largest distance from the Lidar
     # rotate to that direction
@@ -156,21 +178,40 @@ def mover():
     pick_direction()
 
     while not rospy.is_shutdown():
+        rospy.loginfo(['Start while loop'])
         # check Lidar to see if there are any obstacles
         # replace 0's with nan
-        lr2 = laser_range
-        lr2[lr2==0] = np.nan
+        lr2 = np.copy(laser_range)
+        lr20 = (lr2!=0).nonzero()
+        # if the list is not empty
+        # if(len(lr2i[0])>0):
+            # replace 0's with nan
+            # lr2[lr2i] = np.nan
+
+        # rospy.loginfo(['laser_range: ' + str(lr2[lr20])])
+
         # find values less than stop_distance
-        lr2i = (lr2<stop_distance).nonzero()
-        
+        # lr2i = (lr2<float(stop_distance)).nonzero()
+        lr2i = (lr2[lr20]<float(stop_distance)).nonzero()
+
         # if the list is not empty
         if(len(lr2i[0])>0):
+            rospy.loginfo(['Stop!'])
             # find direction with the largest distance from the Lidar
             # rotate to that direction
             # start moving
             pick_direction()
-            
+
         rate.sleep()
+
+    # publish to cmd_vel to move TurtleBot
+#    pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+#    # start moving
+#    twist = Twist()
+#    twist.linear.x = 0.0
+#    twist.angular.z = 0.0
+#    pub.publish(twist)
+
 
 if __name__ == '__main__':
     try:
