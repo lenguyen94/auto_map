@@ -9,14 +9,18 @@ from geometry_msgs.msg import Twist
 import math
 import cmath
 import numpy as np
+import time
 
 laser_range = np.array([])
 occdata = []
 yaw = 0.0
 rotate_speed = 0.1
-linear_speed = 0.1
+linear_speed = 0.01
 stop_distance = 0.25
 occ_bins = [-1, 0, 100, 101]
+front_angle = 60
+front_angles = range(-front_angle,front_angle+1,1)
+
 
 def get_odom_dir(msg):
     global yaw
@@ -31,21 +35,6 @@ def get_laserscan(msg):
 
     # create numpy array
     laser_range = np.array([msg.ranges])
-    # find 0's
-#    lr2 = np.copy(laser_range)
-#    # rospy.loginfo('Shape %i', lr2.shape[0])
-#    lr2i = (lr2==0).nonzero()
-#    # if the list is not empty
-#    if(len(lr2i[0])>0):
-#        # replace 0's with nan
-#        lr2[lr2i] = np.nan
-#
-#    # find index with minimum value
-#    lr2m = np.nanargmin(lr2)
-#    # log the info
-#    if(len(lr2)>0):
-#        # rospy.loginfo('Shortest distance is %f m at %i degrees', lr2[lr2m],lr2m)
-#        rospy.loginfo('Shortest distance is at %i degrees',lr2m)
 
 
 def get_occupancy(msg):
@@ -67,7 +56,7 @@ def rotatebot(rot_angle):
     # create Twist object
     twist = Twist()
     # set up Publisher to cmd_vel topic
-    pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+    pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
     # set the update rate to 1 Hz
     rate = rospy.Rate(1)
 
@@ -116,12 +105,14 @@ def rotatebot(rot_angle):
     # set the rotation speed to 0
     twist.angular.z = 0.0
     # stop the rotation
+    time.sleep(1)
     pub.publish(twist)
 
 
 def pick_direction():
     global laser_range
 
+    rospy.loginfo(['In pick_direction'])
     # publish to cmd_vel to move TurtleBot
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
 
@@ -129,21 +120,12 @@ def pick_direction():
     twist = Twist()
     twist.linear.x = 0.0
     twist.angular.z = 0.0
+    time.sleep(1)
     pub.publish(twist)
 
-    # find direction with the largest distance from the Lidar
-    # replace 0's with nan
-    lr2 = np.copy(laser_range)
-    lr2i = (lr2==0).nonzero()
-    # if the list is not empty
-    if(len(lr2i[0])>0):
-        # replace 0's with nan
-        lr2[lr2i] = np.nan
-
-    # find index with maximum value
-    if(len(lr2)>0):
-        lr2i = np.nanargmax(lr2)
-    else:
+    try:
+        lr2i = np.argmax(laser_range)
+    except ValueError:
         lr2i = 0
 
     rospy.loginfo(['Picked direction: ' + str(lr2i)])
@@ -153,8 +135,11 @@ def pick_direction():
 
     # start moving
     rospy.loginfo(['Start moving'])
-    twist.linear.x = 0.01
+    twist.linear.x = linear_speed
     twist.angular.z = 0.0
+    # not sure if this is really necessary, but things seem to work more
+    # reliably with this
+    time.sleep(1)
     pub.publish(twist)
 
 
@@ -178,20 +163,12 @@ def mover():
     pick_direction()
 
     while not rospy.is_shutdown():
-        rospy.loginfo(['Start while loop'])
-        # check Lidar to see if there are any obstacles
-        # replace 0's with nan
-        lr2 = np.copy(laser_range)
+        # check distances in front of TurtleBot
+        lr2 = laser_range[0,front_angles]
+        # distances beyond the resolution of the Lidar are returned
+        # as zero, so we need to exclude those values
         lr20 = (lr2!=0).nonzero()
-        # if the list is not empty
-        # if(len(lr2i[0])>0):
-            # replace 0's with nan
-            # lr2[lr2i] = np.nan
-
-        # rospy.loginfo(['laser_range: ' + str(lr2[lr20])])
-
         # find values less than stop_distance
-        # lr2i = (lr2<float(stop_distance)).nonzero()
         lr2i = (lr2[lr20]<float(stop_distance)).nonzero()
 
         # if the list is not empty
@@ -203,14 +180,6 @@ def mover():
             pick_direction()
 
         rate.sleep()
-
-    # publish to cmd_vel to move TurtleBot
-#    pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
-#    # start moving
-#    twist = Twist()
-#    twist.linear.x = 0.0
-#    twist.angular.z = 0.0
-#    pub.publish(twist)
 
 
 if __name__ == '__main__':
