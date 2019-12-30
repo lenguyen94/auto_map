@@ -18,7 +18,7 @@ rotate_speed = 0.1
 linear_speed = 0.01
 stop_distance = 0.25
 occ_bins = [-1, 0, 100, 101]
-front_angle = 60
+front_angle = 30
 front_angles = range(-front_angle,front_angle+1,1)
 
 
@@ -126,6 +126,7 @@ def pick_direction():
     try:
         lr2i = np.argmax(laser_range)
     except ValueError:
+        # in case laser_range is empty
         lr2i = 0
 
     rospy.loginfo(['Picked direction: ' + str(lr2i)])
