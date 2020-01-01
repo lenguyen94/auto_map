@@ -85,3 +85,6 @@ import math
 a = complex(math.cos(math.radians(50)),math.sin(math.radians(50)))
 b = complex(math.cos(math.radians(80)),math.sin(math.radians(80)))
 c = a / b
+
+from random import randint
+print(randint(1, 247))
