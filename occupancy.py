@@ -4,7 +4,8 @@ import rospy
 import numpy as np
 from nav_msgs.msg import OccupancyGrid
 import matplotlib.pyplot as plt
-import tf
+import tf2_ros
+from PIL import Image
 
 occ_bins = [-1, 0, 100, 101]
 # counter = 0
@@ -19,22 +20,29 @@ def callback(msg):
     # log the info
     rospy.loginfo('Unmapped: %i Unoccupied: %i Occupied: %i Total: %i', occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins)
 
-    listener = tf.TransformListener()
+    # tfBuffer = tf2_ros.Buffer()
+    # tfListener = tf2_ros.TransformListener(tfBuffer)
 
     # try:
-    (trans,rot) = listener.lookupTransform('/map', '/odom', rospy.Time(0))
-    rospy.loginfo(['Trans: ' + str(trans) + ' Rot: ' + str(rot)])
+    # trans = tfBuffer.lookup_transform('odom', 'map', rospy.Time(0))
+    # rospy.loginfo(['Trans: ' + str(trans)])
 
-    # except (tf.LookupException):
+    # except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
         # pass
 
     # global counter
     # if counter % 10 == 0:
         # plt.cla()
-    plt.imshow(occdata.reshape(msg.info.width,msg.info.height))
-    plt.gca().invert_yaxis()
-    plt.draw_all()
-    plt.pause(0.00000000001)
+
+#    plt.imshow(occdata.reshape(msg.info.width,msg.info.height))
+
+    img = Image.fromarray(occdata.reshape(msg.info.width,msg.info.height),'RGB')
+    # img.show()
+    rotated = img.rotate(45)
+    rotated.show()
+    # plt.gca().invert_yaxis()
+    # plt.draw_all()
+    # plt.pause(0.00000000001)
         # callback.cla()
         # callback.fig.imshow(occdata)
         # callback.ax.axhline(callback.max, c='darkorange')
@@ -58,7 +66,7 @@ def occupancy():
 
     # plt.plot()
     # plt.ion()
-    plt.show()
+    # plt.show()
     # wait until it is time to run again
     # rate.sleep()
 
