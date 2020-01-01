@@ -88,3 +88,13 @@ c = a / b
 
 from random import randint
 print(randint(1, 247))
+
+from PIL import Image
+
+img = Image.fromarray(a, 'RGB')
+img.show()
+a = np.random.uniform(0,1,(600,600))
+img = Image.fromarray(a, 'RGB')
+img.show()
+rotated = img.rotate(45)
+rotated.show()
