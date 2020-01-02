@@ -28,6 +28,7 @@ def get_rotation(msg):
 
 
 def rotatebot(rot_angle):
+    global yaw
     # create Twist object
     twist = Twist()
     # set up Publisher to cmd_vel topic

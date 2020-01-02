@@ -6,11 +6,15 @@ from nav_msgs.msg import OccupancyGrid
 import matplotlib.pyplot as plt
 import tf2_ros
 from PIL import Image
+# from tf.transformations import euler_from_quaternion
 
 occ_bins = [-1, 0, 100, 101]
 # counter = 0
+rotated = Image.fromarray(np.array(np.zeros((1,1))))
 
-def callback(msg):
+def callback(msg, tfBuffer):
+    global rotated
+
     # create numpy array
     occdata = np.array([msg.data])
     # compute histogram to identify percent of bins with -1
@@ -20,29 +24,37 @@ def callback(msg):
     # log the info
     rospy.loginfo('Unmapped: %i Unoccupied: %i Occupied: %i Total: %i', occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins)
 
-    # tfBuffer = tf2_ros.Buffer()
-    # tfListener = tf2_ros.TransformListener(tfBuffer)
-
     # try:
-    # trans = tfBuffer.lookup_transform('odom', 'map', rospy.Time(0))
-    # rospy.loginfo(['Trans: ' + str(trans)])
+    # lookup_transform(target_frame, source_frame, time)
+    trans = tfBuffer.lookup_transform('odom', 'map', rospy.Time(0))
+    rospy.loginfo(['Trans: ' + str(trans.transform.translation)])
+    rospy.loginfo(['Rot: ' + str(trans.transform.rotation)])
+    # (roll, pitch, yaw) = euler_from_quaternion(trans.transform.rotation)
+    euler = tf2_ros.transformations.euler_from_quaternion(trans.transform.rotation)
 
     # except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
         # pass
 
-    # global counter
+    # global counter)]
     # if counter % 10 == 0:
         # plt.cla()
 
 #    plt.imshow(occdata.reshape(msg.info.width,msg.info.height))
-
-    img = Image.fromarray(occdata.reshape(msg.info.width,msg.info.height),'RGB')
+    # make occdata go from 0 to 255, reshape into 2D
+    odata = np.uint8((occdata + 155).reshape(msg.info.width,msg.info.height))
+    img = Image.fromarray(np.flipud(odata))
+    # odata = uint8(occ2.reshape(msg.info.width,msg.info.height))
+    # img = Image.fromarray(occdata.reshape(msg.info.width,msg.info.height),'RGB')
     # img.show()
-    rotated = img.rotate(45)
-    rotated.show()
+    # close previous image
+    # rotated.close()
+    rotated = img.rotate(np.degrees(euler[2]))
+    plt.imshow(rotated)
+    # rotated.show()
     # plt.gca().invert_yaxis()
-    # plt.draw_all()
-    # plt.pause(0.00000000001)
+    plt.draw_all()
+    rospy.sleep(1.0)
+    plt.pause(0.00000000001)
         # callback.cla()
         # callback.fig.imshow(occdata)
         # callback.ax.axhline(callback.max, c='darkorange')
@@ -61,12 +73,16 @@ def occupancy():
     # callback.ax = callback.fig.add_subplot(111)
     # callback.max = rospy.get_param('~kappa_max', 0.2)
 
+    tfBuffer = tf2_ros.Buffer()
+    tfListener = tf2_ros.TransformListener(tfBuffer)
+    rospy.sleep(1.0)
+
     # subscribe to map occupancy data
-    rospy.Subscriber('map', OccupancyGrid, callback)
+    rospy.Subscriber('map', OccupancyGrid, callback, tfBuffer)
 
     # plt.plot()
-    # plt.ion()
-    # plt.show()
+    plt.ion()
+    plt.show()
     # wait until it is time to run again
     # rate.sleep()
 
