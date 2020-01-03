@@ -91,6 +91,7 @@ c = a / b
 from random import randint
 print(randint(1, 247))
 
+# commands to work with images
 from PIL import Image
 
 a = np.random.randint(0,255,(600,600),dtype=np.uint8)
