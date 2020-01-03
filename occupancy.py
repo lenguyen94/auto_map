@@ -6,7 +6,7 @@ from nav_msgs.msg import OccupancyGrid
 import matplotlib.pyplot as plt
 import tf2_ros
 from PIL import Image
-# from tf.transformations import euler_from_quaternion
+from tf.transformations import euler_from_quaternion
 
 # constants
 occ_bins = [-1, 0, 100, 101]
@@ -33,8 +33,8 @@ def callback(msg, tfBuffer):
     trans = tfBuffer.lookup_transform('odom', 'map', rospy.Time(0))
     rospy.loginfo(['Trans: ' + str(trans.transform.translation)])
     rospy.loginfo(['Rot: ' + str(trans.transform.rotation)])
-    # (roll, pitch, yaw) = euler_from_quaternion(trans.transform.rotation)
-    euler = tf2_ros.transformations.euler_from_quaternion(trans.transform.rotation)
+    orientation_list = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
+    (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
 
     # except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
         # pass
@@ -52,7 +52,7 @@ def callback(msg, tfBuffer):
     # img.show()
     # close previous image
     # rotated.close()
-    rotated = img.rotate(np.degrees(euler[2]))
+    rotated = img.rotate(np.degrees(yaw))
     plt.imshow(rotated)
     # rotated.show()
     # plt.gca().invert_yaxis()
