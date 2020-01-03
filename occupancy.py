@@ -8,9 +8,13 @@ import tf2_ros
 from PIL import Image
 # from tf.transformations import euler_from_quaternion
 
+# constants
 occ_bins = [-1, 0, 100, 101]
+
+# create global variables
 # counter = 0
 rotated = Image.fromarray(np.array(np.zeros((1,1))))
+
 
 def callback(msg, tfBuffer):
     global rotated
