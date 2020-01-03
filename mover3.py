@@ -8,10 +8,14 @@ import math
 import cmath
 import numpy as np
 
-yaw = 0.0
+# constants
 rotate_speed = 0.1
 linear_speed = 0.1
 
+# global variables
+yaw = 0.0
+
+# function to check if keyboard input is a number
 def isnumber(value):
     try:
         int(value)
@@ -20,14 +24,18 @@ def isnumber(value):
         return False
 
 
+# function to set the global variable yaw using the odometry information
 def get_rotation(msg):
+	# use global variable yaw
     global yaw
     orientation_quat =  msg.pose.pose.orientation
     orientation_list = [orientation_quat.x, orientation_quat.y, orientation_quat.z, orientation_quat.w]
     (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
 
 
+# function to rotate the TurtleBot
 def rotatebot(rot_angle):
+	# use global variable yaw
     global yaw
     # create Twist object
     twist = Twist()
@@ -82,6 +90,7 @@ def rotatebot(rot_angle):
     pub.publish(twist)
 
 
+# function to read keyboard input and move the TurtleBot accordingly
 def mover():
     twist = Twist()
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
@@ -110,6 +119,7 @@ def mover():
 
         rospy.loginfo(cmd_char)
         rate.sleep()
+
 
 if __name__ == '__main__':
     try:
