@@ -10,6 +10,7 @@ from tf.transformations import euler_from_quaternion
 
 # constants
 occ_bins = [-1, 0, 100, 101]
+occ_offset = 155
 
 # create global variables
 # counter = 0
@@ -30,11 +31,12 @@ def callback(msg, tfBuffer):
 
     # try:
     # lookup_transform(target_frame, source_frame, time)
-    trans = tfBuffer.lookup_transform('odom', 'map', rospy.Time(0))
+    trans = tfBuffer.lookup_transform('map', 'odom', rospy.Time(0))
     rospy.loginfo(['Trans: ' + str(trans.transform.translation)])
     rospy.loginfo(['Rot: ' + str(trans.transform.rotation)])
     orientation_list = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
     (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
+    rospy.loginfo(['Yaw: R: ' + str(yaw) + ' D: ' + str(np.degrees(yaw))])
 
     # except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
         # pass
@@ -45,7 +47,7 @@ def callback(msg, tfBuffer):
 
 #    plt.imshow(occdata.reshape(msg.info.width,msg.info.height))
     # make occdata go from 0 to 255, reshape into 2D
-    odata = np.uint8((occdata + 155).reshape(msg.info.width,msg.info.height))
+    odata = np.uint8((occdata + occ_offset).reshape(msg.info.width,msg.info.height))
     img = Image.fromarray(np.flipud(odata))
     # odata = uint8(occ2.reshape(msg.info.width,msg.info.height))
     # img = Image.fromarray(occdata.reshape(msg.info.width,msg.info.height),'RGB')
