@@ -55,7 +55,8 @@ def callback(msg, tfBuffer):
     # close previous image
     # rotated.close()
     rotated = img.rotate(np.degrees(yaw))
-    plt.imshow(rotated)
+    # plt.imshow(rotated)
+    plt.imshow(img)
     # rotated.show()
     # plt.gca().invert_yaxis()
     plt.draw_all()
